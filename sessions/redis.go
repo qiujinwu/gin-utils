@@ -13,10 +13,10 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"gin-utils/securecookie"
 	"gopkg.in/redis.v5"
 	"github.com/gin-gonic/gin"
 	"time"
+	"github.com/qiujinwu/gin-utils/securecookie"
 )
 
 // Amount of time for cookies/redis keys to expire.
@@ -256,6 +256,17 @@ func (s *RediStore) Save(c *gin.Context, session* SessionImp) error {
 		http.SetCookie(c.Writer, NewCookie(session.name, encoded, session.Options))
 	}
 	return nil
+}
+
+
+// Save adds a single session to the response.
+func (s *RediStore) Delete(c *gin.Context, name string) error {
+	session,error := s.Get(c,name)
+	if error != nil{
+		return error
+	}
+	session.Options.MaxAge = -1
+	return s.Save(c,session)
 }
 
 // save stores the session in redis.

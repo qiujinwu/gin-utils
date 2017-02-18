@@ -2,9 +2,9 @@ package sessions
 
 import (
 	"net/http"
-	"gin-utils/securecookie"
 	"github.com/gin-gonic/gin"
 	"time"
+	"github.com/qiujinwu/gin-utils/securecookie"
 )
 
 
@@ -68,8 +68,8 @@ func (s *CookieStore) New(c *gin.Context, name string) (*SessionImp, error) {
 	session.c = c
 
 	var err error
-	if c, errCookie := c.Request.Cookie(name); errCookie == nil {
-		err = securecookie.DecodeMulti(name, c.Value, &session.Values,s.Codecs...)
+	if cookie, errCookie := c.Request.Cookie(name); errCookie == nil {
+		err = securecookie.DecodeMulti(name, cookie.Value, &session.Values,s.Codecs...)
 		if err == nil {
 			session.IsNew = false
 		}
@@ -85,6 +85,17 @@ func (s *CookieStore) Save(c *gin.Context, session* SessionImp) error {
 	}
 	http.SetCookie(c.Writer, NewCookie(session.name, encoded, session.Options))
 	return nil
+}
+
+
+// Save adds a single session to the response.
+func (s *CookieStore) Delete(c *gin.Context, name string) error {
+	session,error := s.Get(c,name)
+	if error != nil{
+		return error
+	}
+	session.Options.MaxAge = -1
+	return s.Save(c,session)
 }
 
 // MaxAge sets the maximum age for the store and the underlying cookie

@@ -16,4 +16,7 @@ type Store interface {
 
 	// Save should persist session to the underlying store implementation.
 	Save(c *gin.Context, s* SessionImp) error
+
+	// 删除cookie
+	Delete(c *gin.Context, name string) error
 }

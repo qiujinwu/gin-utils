@@ -162,6 +162,7 @@ func (s *Registry) Get(store Store, name string) (session *SessionImp, err error
 		nsession, err = store.New(s.c, name)
 		session,ok = nsession.(*SessionImp)
 		session.name = name
+		session.c = s.c
 		s.sessions[name] = sessionInfo{s: session, e: err}
 	}
 	session.store = store

@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"gin-utils/securecookie"
 	"path/filepath"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"encoding/base32"
 	"github.com/gin-gonic/gin"
 	"sync"
+	"github.com/qiujinwu/gin-utils/securecookie"
 )
 
 var fileMutex sync.RWMutex
@@ -122,6 +122,16 @@ func (s *FilesystemStore) Save(c *gin.Context, session* SessionImp) error {
 	}
 	http.SetCookie(c.Writer, NewCookie(session.name, encoded, session.Options))
 	return nil
+}
+
+// Save adds a single session to the response.
+func (s *FilesystemStore) Delete(c *gin.Context, name string) error {
+	session,error := s.Get(c,name)
+	if error != nil{
+		return error
+	}
+	session.Options.MaxAge = -1
+	return s.Save(c,session)
 }
 
 // MaxAge sets the maximum age for the store and the underlying cookie
