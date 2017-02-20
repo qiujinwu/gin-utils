@@ -3,12 +3,12 @@ package csrf
 import (
 	"crypto/sha1"
 	"encoding/base64"
-	"errors"
 	"io"
-
 	"github.com/dchest/uniuri"
 	"github.com/qiujinwu/gin-utils/sessions"
 	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
 )
 
 const (
@@ -17,10 +17,18 @@ const (
 	csrfToken  = "csrfToken"
 )
 
+var (
+	DefaultCookieKey  = "_crsf"
+	default_store sessions.Store = nil
+)
+
 var defaultIgnoreMethods = []string{"GET", "HEAD", "OPTIONS"}
 
 var defaultErrorFunc = func(c *gin.Context) {
-	panic(errors.New("CSRF token mismatch"))
+	c.JSON(http.StatusForbidden, gin.H{
+		"code": http.StatusForbidden,
+		"message": "CSRF token mismatch",
+	})
 }
 
 var defaultTokenGetter = func(c *gin.Context) string {
@@ -74,6 +82,13 @@ func Middleware(options Options) gin.HandlerFunc {
 	errorFunc := options.ErrorFunc
 	tokenGetter := options.TokenGetter
 
+	if default_store == nil{
+		default_store = sessions.NewCookieStore([]byte(options.Secret))
+	}else{
+		log.Fatal("bind filter more than once")
+		return nil
+	}
+
 	if ignoreMethods == nil {
 		ignoreMethods = defaultIgnoreMethods
 	}
@@ -87,7 +102,7 @@ func Middleware(options Options) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
+		session,_ := default_store.Get(c,DefaultCookieKey)
 		c.Set(csrfSecret, options.Secret)
 
 		if inArray(ignoreMethods, c.Request.Method) {
@@ -119,7 +134,7 @@ func Middleware(options Options) gin.HandlerFunc {
 
 // GetToken returns a CSRF token.
 func GetToken(c *gin.Context) string {
-	session := sessions.Default(c)
+	session,_ := default_store.Get(c,DefaultCookieKey)
 	secret := c.MustGet(csrfSecret).(string)
 
 	if t, ok := c.Get(csrfToken); ok {

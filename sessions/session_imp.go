@@ -9,8 +9,8 @@ import (
 
 
 const (
-	DefaultKey  = "github.com/gin-contrib/sessions"
-	DefaultRegistryKey  = "github.com/gin-contrib/registrys"
+	// DefaultKey  = "github.com/gin-contrib/sessions"
+	DefaultRegistryKey  = "github.com/qiujinwu/registrys"
 	errorFormat = "[sessions] ERROR! %s\n"
 	// Default flashes key.
 	flashesKey = "_flash"
@@ -118,9 +118,9 @@ func (s *SessionImp) Written() bool {
 
 
 // shortcut to get session
-func Default(c *gin.Context) Session {
-	return c.MustGet(DefaultKey).(Session)
-}
+//func Default(c *gin.Context) Session {
+//	return c.MustGet(DefaultKey).(Session)
+//}
 
 
 // sessionInfo stores a session tracked by the registry.

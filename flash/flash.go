@@ -10,7 +10,7 @@ import (
 var (
 	DefaultCookieKey  = "_flash"
 	default_store sessions.Store = nil
-	handle gin.HandlerFunc = nil
+	// handle gin.HandlerFunc = nil
 )
 
 func AddFlash(c *gin.Context, vars ...string) {
