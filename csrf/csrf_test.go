@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/contrib/sessions"
+	"github.com/qiujinwu/gin-utils/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,9 +17,8 @@ func init() {
 
 func newServer(options Options) *gin.Engine {
 	g := gin.New()
-	store := sessions.NewCookieStore([]byte("secret123"))
-
-	g.Use(sessions.Sessions("my_session", store))
+	// store := sessions.NewCookieStore([]byte("secret123"))
+	// g.Use(sessions.Sessions("my_session", store))
 	g.Use(Middleware(options))
 
 	return g

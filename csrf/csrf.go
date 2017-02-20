@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/dchest/uniuri"
-	"github.com/gin-gonic/contrib/sessions"
+	"github.com/qiujinwu/gin-utils/sessions"
 	"github.com/gin-gonic/gin"
 )
 
