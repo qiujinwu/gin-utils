@@ -7,6 +7,11 @@ import (
 	"net/http"
 	"strings"
 	"regexp"
+	"encoding/gob"
+)
+
+const (
+	CurrentUserKey = "current_user"
 )
 
 type Config struct {
@@ -65,6 +70,7 @@ type Options struct {
 	Blacklist bool
 	ErrorFunc gin.HandlerFunc
 	SessionStore sessions.Store
+	User interface{}
 }
 
 func AddUrl(url string,regex string) {
@@ -75,13 +81,13 @@ func AddUrl(url string,regex string) {
 	_config.Items[url] = regex
 }
 
-func Login(c *gin.Context) {
+func Login(c *gin.Context,user interface{}) {
 	if _config == nil {
 		log.Fatal("add url before new filter")
 		return
 	}
 	session_inst, _ := _config.store.Get(c, "session")
-	session_inst.Set("count", 1)
+	session_inst.Set("user", user)
 	session_inst.Save()
 }
 
@@ -113,6 +119,7 @@ func NewFilter(options Options) gin.HandlerFunc {
 		_config = newConfig(options.Blacklist)
 		_config.store = options.SessionStore
 	}
+	gob.Register(options.User)
 	_handle = func(c *gin.Context) {
 		method := strings.ToUpper(c.Request.Method)
 		if _config.need_ignore(method + c.Request.URL.Path) {
@@ -121,8 +128,9 @@ func NewFilter(options Options) gin.HandlerFunc {
 		}
 
 		session_inst, _ := options.SessionStore.Get(c, "session")
-		v := session_inst.Get("count")
+		v := session_inst.Get("user")
 		if v != nil {
+			c.Set(CurrentUserKey,v)
 			c.Next()
 		} else {
 			options.ErrorFunc(c)
