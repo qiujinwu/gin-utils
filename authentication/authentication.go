@@ -53,6 +53,20 @@ func newConfig(blacklist bool) *Config {
 var _config *Config = nil
 var _handle gin.HandlerFunc = nil
 
+var defaultErrorFunc = func(c *gin.Context) {
+	c.JSON(http.StatusForbidden, gin.H{
+		"code": http.StatusForbidden,
+		"message": "authentication requried",
+	})
+}
+
+// Options stores configurations for a CSRF middleware.
+type Options struct {
+	Blacklist bool
+	ErrorFunc gin.HandlerFunc
+	SessionStore sessions.Store
+}
+
 func AddUrl(url string,regex string) {
 	if _config == nil {
 		log.Fatal("add url before new filter")
@@ -80,30 +94,38 @@ func Logout(c *gin.Context) {
 	_config.store.Delete(c, "session")
 }
 
-func NewFilter(blacklist bool, store sessions.Store) gin.HandlerFunc {
+func NewFilter(options Options) gin.HandlerFunc {
 	if _handle != nil {
 		log.Fatal("bind filter more than once")
 		return nil
 	}
+
+	if options.ErrorFunc == nil{
+		options.ErrorFunc = defaultErrorFunc
+	}
+
+	if options.SessionStore == nil{
+		log.Fatal("store can NOT be empty")
+		return nil
+	}
+
 	if _config == nil {
-		_config = newConfig(blacklist)
-		_config.store = store
+		_config = newConfig(options.Blacklist)
+		_config.store = options.SessionStore
 	}
 	_handle = func(c *gin.Context) {
 		method := strings.ToUpper(c.Request.Method)
-		if _config.need_ignore(method + c.Request.RequestURI) {
+		if _config.need_ignore(method + c.Request.URL.Path) {
 			c.Next()
 			return
 		}
 
-		session_inst, _ := store.Get(c, "session")
+		session_inst, _ := options.SessionStore.Get(c, "session")
 		v := session_inst.Get("count")
 		if v != nil {
 			c.Next()
 		} else {
-			c.JSON(http.StatusForbidden, gin.H{
-				"message": "StatusForbidden",
-			})
+			options.ErrorFunc(c)
 			c.Abort()
 			return
 		}
