@@ -5,57 +5,19 @@ import (
 	"github.com/qiujinwu/gin-utils/sessions"
 	"log"
 	"net/http"
-	"strings"
-	"regexp"
 	"encoding/gob"
+	"github.com/qiujinwu/gin-utils/utils"
 )
 
 const (
 	CurrentUserKey = "current_user"
 )
 
-type Config struct {
-	// true 黑名单，false 白名单
-	Blacklist bool
-	// 名单列表
-	Items map[string]string
 
-	store sessions.Store
-}
-
-// regexp.MatchString(pat, src)
-func (config *Config) contain(url string) bool {
-	for k, v := range config.Items {
-		if v != ""{
-			if match,err := regexp.MatchString(v, url);match && err == nil{
-				return true
-			}
-		}else{
-			if k == url{
-				return true
-			}
-		}
-	}
-	return false
-}
-
-/**
-不在黑名单或者在白名单的被忽略
-*/
-func (config *Config) need_ignore(url string) bool {
-	return config.Blacklist && !config.contain(url) ||
-		!config.Blacklist && config.contain(url)
-}
-
-func newConfig(blacklist bool) *Config {
-	return &Config{
-		Blacklist: blacklist,
-		Items:     make(map[string]string),
-	}
-}
 
 //--------------------------------------
-var _config *Config = nil
+var _config *utils.Config = nil
+var _store sessions.Store = nil
 var _handle gin.HandlerFunc = nil
 
 var defaultErrorFunc = func(c *gin.Context) {
@@ -86,7 +48,7 @@ func Login(c *gin.Context,user interface{}) {
 		log.Fatal("add url before new filter")
 		return
 	}
-	session_inst, _ := _config.store.Get(c, "session")
+	session_inst, _ := _store.Get(c, "session")
 	session_inst.Set("user", user)
 	session_inst.Save()
 }
@@ -97,7 +59,7 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	_config.store.Delete(c, "session")
+	_store.Delete(c, "session")
 }
 
 func NewFilter(options Options) gin.HandlerFunc {
@@ -116,14 +78,13 @@ func NewFilter(options Options) gin.HandlerFunc {
 	}
 
 	if _config == nil {
-		_config = newConfig(options.Blacklist)
-		_config.store = options.SessionStore
+		_config = utils.New(options.Blacklist)
 	}
+
+	_store = options.SessionStore
 	gob.Register(options.User)
 	_handle = func(c *gin.Context) {
-		method := strings.ToUpper(c.Request.Method)
-		if _config.need_ignore(method + c.Request.URL.Path) {
-			c.Next()
+		if _config.AllowAccess(c) {
 			return
 		}
 

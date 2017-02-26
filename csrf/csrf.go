@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"github.com/qiujinwu/gin-utils/utils"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 var (
 	DefaultCookieKey  = "_crsf"
 	default_store sessions.Store = nil
+ 	_config *utils.Config = nil
 )
 
 var defaultIgnoreMethods = []string{"GET", "HEAD", "OPTIONS"}
@@ -53,6 +55,7 @@ type Options struct {
 	IgnoreMethods []string
 	ErrorFunc     gin.HandlerFunc
 	TokenGetter   func(c *gin.Context) string
+	Blacklist bool
 }
 
 func tokenize(secret, salt string) string {
@@ -76,6 +79,14 @@ func inArray(arr []string, value string) bool {
 	return inarr
 }
 
+func AddUrl(url string,regex string) {
+	if _config == nil {
+		log.Fatal("add url before new filter")
+		return
+	}
+	_config.Items[url] = regex
+}
+
 // Middleware validates CSRF token.
 func Middleware(options Options) gin.HandlerFunc {
 	ignoreMethods := options.IgnoreMethods
@@ -87,6 +98,10 @@ func Middleware(options Options) gin.HandlerFunc {
 	}else{
 		log.Fatal("bind filter more than once")
 		return nil
+	}
+
+	if _config == nil {
+		_config = utils.New(options.Blacklist)
 	}
 
 	if ignoreMethods == nil {
@@ -102,6 +117,10 @@ func Middleware(options Options) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		if _config.AllowAccess(c) {
+			return
+		}
+
 		session,_ := default_store.Get(c,DefaultCookieKey)
 		c.Set(csrfSecret, options.Secret)
 
