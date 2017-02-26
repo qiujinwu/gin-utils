@@ -125,10 +125,9 @@ func Middleware(options Options) gin.HandlerFunc {
 
 		if tokenize(options.Secret, salt) != token {
 			errorFunc(c)
+			c.Abort()
 			return
 		}
-
-		c.Next()
 	}
 }
 
