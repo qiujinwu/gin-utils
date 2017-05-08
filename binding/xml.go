@@ -20,5 +20,5 @@ func (xmlBinding) Bind(req *http.Request, obj interface{}) error {
 	if err := decoder.Decode(obj); err != nil {
 		return err
 	}
-	return validate(obj)
+	return Validate(obj)
 }

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"gopkg.in/go-playground/validator.v8"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type defaultValidator struct {
@@ -26,8 +26,10 @@ func (v *defaultValidator) ValidateStruct(obj interface{}) error {
 
 func (v *defaultValidator) lazyinit() {
 	v.once.Do(func() {
-		config := &validator.Config{TagName: "binding"}
-		v.validate = validator.New(config)
+		// config := &validator.Config{TagName: "binding"}
+		// v.validate = validator.New(config)
+		v.validate = validator.New()
+		v.validate.SetTagName("binding")
 	})
 }
 
