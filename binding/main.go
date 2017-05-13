@@ -45,7 +45,7 @@ func parseError(err error, obj interface{})(error,[]string){
 			}
 			return real_err,tips
 		}else{
-			return real_err,tips
+			return err,tips
 		}
 	}
 }
