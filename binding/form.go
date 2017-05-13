@@ -4,7 +4,10 @@
 
 package binding
 
-import "net/http"
+import (
+	"net/http"
+	"github.com/gin-gonic/gin"
+)
 
 type formBinding struct{}
 type formPostBinding struct{}
@@ -14,12 +17,12 @@ func (formBinding) Name() string {
 	return "form"
 }
 
-func (formBinding) Bind(req *http.Request, obj interface{}) error {
-	if err := req.ParseForm(); err != nil {
+func (formBinding) Bind(c * gin.Context, obj interface{}) error {
+	if err := c.Request.ParseForm(); err != nil {
 		return err
 	}
-	req.ParseMultipartForm(32 << 10) // 32 MB
-	if err := mapForm(obj, req.Form); err != nil {
+	c.Request.ParseMultipartForm(32 << 10) // 32 MB
+	if err := mapForm(obj, c.Request.Form); err != nil {
 		return err
 	}
 	return Validate(obj)

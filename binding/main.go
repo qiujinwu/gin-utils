@@ -33,7 +33,7 @@ func parseError(err error, obj interface{})(error,[]string){
 			}
 
 			for _, v := range real_err {
-				elem,ok := objt.FieldByName(v.Name)
+				elem,ok := objt.FieldByName(v.StructField())
 				if !ok{
 					continue
 				}
@@ -58,6 +58,6 @@ func BindJSON(c * gin.Context,obj interface{}) (error,[]string) {
 // BindWith binds the passed struct pointer using the specified binding engine.
 // See the binding package.
 func BindWith(c * gin.Context,obj interface{}, b Binding) (error,[]string) {
-	err := b.Bind(c.Request, obj)
+	err := b.Bind(c, obj)
 	return parseError(err,obj)
 }

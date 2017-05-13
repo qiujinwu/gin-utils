@@ -6,7 +6,7 @@ package binding
 
 import (
 	"encoding/xml"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 type xmlBinding struct{}
@@ -15,8 +15,8 @@ func (xmlBinding) Name() string {
 	return "xml"
 }
 
-func (xmlBinding) Bind(req *http.Request, obj interface{}) error {
-	decoder := xml.NewDecoder(req.Body)
+func (xmlBinding) Bind(c * gin.Context, obj interface{}) error {
+	decoder := xml.NewDecoder(c.Request.Body)
 	if err := decoder.Decode(obj); err != nil {
 		return err
 	}

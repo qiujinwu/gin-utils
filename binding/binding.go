@@ -4,7 +4,9 @@
 
 package binding
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 const (
 	MIMEJSON              = "application/json"
@@ -19,7 +21,7 @@ const (
 
 type Binding interface {
 	Name() string
-	Bind(*http.Request, interface{}) error
+	Bind(*gin.Context, interface{}) error
 }
 
 type StructValidator interface {
@@ -35,6 +37,7 @@ var Validator StructValidator = &defaultValidator{}
 
 var (
 	JSON          = jsonBinding{}
+	PATH          = pathBinding{}
 	XML           = xmlBinding{}
 	Form          = formBinding{}
 	FormPost      = formPostBinding{}

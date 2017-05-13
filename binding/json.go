@@ -6,8 +6,7 @@ package binding
 
 import (
 	"encoding/json"
-
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 type jsonBinding struct{}
@@ -16,8 +15,8 @@ func (jsonBinding) Name() string {
 	return "json"
 }
 
-func (jsonBinding) Bind(req *http.Request, obj interface{}) error {
-	decoder := json.NewDecoder(req.Body)
+func (jsonBinding) Bind(c * gin.Context, obj interface{}) error {
+	decoder := json.NewDecoder(c.Request.Body)
 	if err := decoder.Decode(obj); err != nil {
 		return err
 	}

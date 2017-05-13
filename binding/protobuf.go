@@ -8,7 +8,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"io/ioutil"
-	"net/http"
+	"github.com/gin-gonic/gin"
 )
 
 type protobufBinding struct{}
@@ -17,9 +17,9 @@ func (protobufBinding) Name() string {
 	return "protobuf"
 }
 
-func (protobufBinding) Bind(req *http.Request, obj interface{}) error {
+func (protobufBinding) Bind(c * gin.Context, obj interface{}) error {
 
-	buf, err := ioutil.ReadAll(req.Body)
+	buf, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		return err
 	}
