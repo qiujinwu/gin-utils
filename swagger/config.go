@@ -171,7 +171,7 @@ type SwaggerEntry struct {
 	Patch  *SwaggerMethodEntry `json:"patch,omitempty"`
 }
 
-type security_definition struct {
+type SecurityDefinition struct {
 	Description string `json:"description,omitempty"`
 	Type        string `json:"type"`
 	In          string `json:"in"`

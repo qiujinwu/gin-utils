@@ -219,7 +219,7 @@ func GetFlags(baseUrl string) []cli.Flag {
 	}
 }
 
-func InitializeApiRoutes(grouter *gin.Engine, param *cli.Context, docLoader DocLoader) {
+func InitializeApiRoutes(grouter *gin.Engine, param *cli.Context, docLoader DocLoader,headers []SecurityDefinition) {
 	if gOption != nil {
 		panic("swagger inited yet")
 		return
@@ -230,6 +230,17 @@ func InitializeApiRoutes(grouter *gin.Engine, param *cli.Context, docLoader DocL
 	grouter.GET("/"+param.String("swagger_url_prefix")+"/spec", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		swaggerData1 := gOption.swaggerData
+
+		headersDef := make(map[string]SecurityDefinition)
+		if headers != nil{
+			for _,v := range headers{
+				key := v.Type
+				v.In = "header"
+				v.Type = "apiKey"
+				headersDef[key] = v
+			}
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"basePath": param.String("swagger_base_path"),
 			"swagger":  param.String("swagger_version"),
@@ -244,14 +255,7 @@ func InitializeApiRoutes(grouter *gin.Engine, param *cli.Context, docLoader DocL
 			},
 			"definition": struct{}{},
 			"paths":      swaggerData1,
-			"securityDefinitions": map[string]security_definition{
-				"appid": security_definition{
-					Type:        "apiKey",
-					Name:        "X-APP-ID",
-					In:          "header",
-					Description: "app id,用于区分是那个应用申请授权",
-				},
-			},
+			"securityDefinitions": headersDef,
 		})
 
 	})
