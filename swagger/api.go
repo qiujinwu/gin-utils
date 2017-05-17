@@ -223,12 +223,13 @@ func GetFlags() []cli.Flag {
 	}
 }
 
-func InitializeApiRoutes(grouter *gin.Engine, param *cli.Context, f func()) {
+func InitializeApiRoutes(grouter *gin.Engine, param *cli.Context, docLoader DocLoader) {
 	if gOption != nil {
 		panic("swagger inited yet")
 		return
 	}
 	gOption = newOptions(param)
+	gOption.docLoader = docLoader
 
 	grouter.GET("/"+param.String("swagger_url_prefix")+"/spec", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
