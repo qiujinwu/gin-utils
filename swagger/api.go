@@ -166,17 +166,13 @@ func swaggerFinish(path string, method string, entry *SwaggerMethodEntry) {
 	gOption.swaggerData[path] = sentry
 }
 
-func GetFlags() []cli.Flag {
-	if gOption == nil {
-		panic("please init swagger first")
-		return []cli.Flag{}
-	}
+func GetFlags(baseUrl string) []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{
 			EnvVar: "SWAGGER_BASE_PATH",
 			Name:   "swagger_base_path",
 			Usage:  "api前缀，例如/api/v1",
-			Value:  gOption.baseUrl,
+			Value:  baseUrl,
 		},
 		cli.StringFlag{
 			EnvVar: "SWAGGER_VERSION",
