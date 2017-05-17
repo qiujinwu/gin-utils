@@ -46,7 +46,7 @@ func getDbConfig(c *cli.Context,driver string)(config string){
 	return
 }
 
-func Open(c *cli.Context) (db *sql.DB,driver string) {
+func OpenDB(c *cli.Context) (db *sql.DB,driver string) {
 	driver = "mysql"
 	var config string = getDbConfig(c,driver)
 	db, err := sql.Open(driver, config)
