@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"gin-utils/sessions"
+	"github.com/qiujinwu/gin-utils/sessions"
 	"gopkg.in/redis.v5"
 )
 

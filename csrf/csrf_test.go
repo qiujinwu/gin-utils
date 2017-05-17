@@ -6,8 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/qiujinwu/gin-utils/sessions"
 	"github.com/gin-gonic/gin"
 )
 
