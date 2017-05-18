@@ -166,7 +166,7 @@ const (
 )
 
 //默认客户端，pkcs8私钥格式，pem编码
-func NewDefault(privateKey,publicKey string) (Cipher, error) {
+func NewDefaultCipher(privateKey,publicKey string) (Cipher, error) {
 	blockPri, _ := pem.Decode([]byte(privateKey))
 	if blockPri == nil {
 		return nil, errors.New("private key error")
@@ -177,10 +177,10 @@ func NewDefault(privateKey,publicKey string) (Cipher, error) {
 		return nil, errors.New("public key error")
 	}
 
-	return New(blockPri.Bytes, blockPub.Bytes, PKCS8)
+	return NewCipher(blockPri.Bytes, blockPub.Bytes, PKCS8)
 }
 
-func New(privateKey, publicKey []byte, privateKeyType Type) (Cipher, error) {
+func NewCipher(privateKey, publicKey []byte, privateKeyType Type) (Cipher, error) {
 
 	priKey, err := genPriKey(privateKey, privateKeyType)
 	if err != nil {
@@ -193,7 +193,7 @@ func New(privateKey, publicKey []byte, privateKeyType Type) (Cipher, error) {
 	return &pkcsClient{privateKey: priKey, publicKey: pubKey}, nil
 }
 
-func NewDefaultEx(privateKey,publicKey string) (Cipher, error) {
+func NewDefaultCipherEx(privateKey,publicKey string) (Cipher, error) {
 	var bytePri []byte = nil
 	if len(privateKey) > 0{
 		blockPri, _ := pem.Decode([]byte(privateKey))
@@ -212,10 +212,10 @@ func NewDefaultEx(privateKey,publicKey string) (Cipher, error) {
 		bytePub = blockPub.Bytes
 	}
 
-	return NewEx(bytePri, bytePub, PKCS8)
+	return NewCipherEx(bytePri, bytePub, PKCS8)
 }
 
-func NewEx(privateKey, publicKey []byte, privateKeyType Type) (Cipher, error) {
+func NewCipherEx(privateKey, publicKey []byte, privateKeyType Type) (Cipher, error) {
 	var priKey *rsa.PrivateKey = nil
 	var err error
 	if privateKey != nil{
