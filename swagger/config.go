@@ -1,34 +1,35 @@
 package swagger
 
 import (
+	"github.com/qiujinwu/gin-utils/utils"
 	"net/http"
 	"strings"
-	"github.com/qiujinwu/gin-utils/utils"
 )
 
 type SwaggerMethodParameter struct {
-	Description string         `json:"description,omitempty" yaml:"description"`
-	In          string         `json:"in" yaml:"in" binding:"eq=query|eq=path|eq=formData|eq=body|eq=header"`
-	Name        string         `json:"name" yaml:"name" binding:"required,max=100,min=1"`
-	Required    bool           `json:"required" yaml:"required"`
-	Type        string         `json:"type" yaml:"type" binding:"eq=string|eq=integer|eq=number|eq=boolean|eq=array|eq=object"`
+	Description string               `json:"description,omitempty" yaml:"description"`
+	In          string               `json:"in" yaml:"in" binding:"eq=query|eq=path|eq=formData|eq=body|eq=header"`
+	Name        string               `json:"name" yaml:"name" binding:"required,max=100,min=1"`
+	Required    bool                 `json:"required" yaml:"required"`
+	Type        string               `json:"type" yaml:"type" binding:"eq=string|eq=integer|eq=number|eq=boolean|eq=array|eq=object"`
 	Schema      *utils.JsonSchemaObj `json:"schema,omitempty" yaml:"schema"`
 }
 
-type SwaggetMethodResponse struct {
-	Schema *utils.JsonSchemaObj `json:"schema" yaml:"schema" binding:"required"`
-}
+//type SwaggetMethodResponse struct {
+//	Schema *utils.JsonSchemaObj `json:"schema" yaml:"schema" binding:"required"`
+//}
 
 type SwaggerMethodEntry struct {
-	Description string                         `json:"description,omitempty" yaml:"description"`
-	Summary     string                         `json:"summary" yaml:"summary"`
-	Tags        []string                       `json:"tags" yaml:"tags" binding:"required,dive,required"`
-	Parameters  []*SwaggerMethodParameter      `json:"parameters" yaml:"parameters" binding:"dive"`
-	Responses   map[int]*SwaggetMethodResponse `json:"responses" yaml:"responses" binding:"required"`
+	Description string                       `json:"description,omitempty" yaml:"description"`
+	Summary     string                       `json:"summary" yaml:"summary"`
+	Tags        []string                     `json:"tags" yaml:"tags" binding:"required,dive,required"`
+	Parameters  []*SwaggerMethodParameter    `json:"parameters" yaml:"parameters" binding:"dive"`
+	Produces    []string                     `json:"produces,omitempty" yaml:"produces"`
+	Responses   map[int]*utils.JsonSchemaObj `json:"responses" yaml:"responses" binding:"required"`
 }
 
 func SliceContain(s []string, e string) bool {
-	if s == nil{
+	if s == nil {
 		return false
 	}
 	for _, a := range s {
@@ -39,17 +40,17 @@ func SliceContain(s []string, e string) bool {
 	return false
 }
 
-func parseParameter(param *SwaggerMethodEntry,data interface{},ptype string){
+func parseParameter(param *SwaggerMethodEntry, data interface{}, ptype string) {
 	obj := utils.JsonSchemaObj{}
 	obj.ParseObject(data)
-	if obj.Type != "object"{
+	if obj.Type != "object" {
 		panic("form data invalid")
 		return
 	}
 	for k, v := range obj.Properties {
 		if strings.ToLower(v.Type) == "slice" ||
 			strings.ToLower(v.Type) == "struct" ||
-			strings.ToLower(v.Type) == "map"{
+			strings.ToLower(v.Type) == "map" {
 			panic("form data invalid type")
 			return
 		}
@@ -57,47 +58,47 @@ func parseParameter(param *SwaggerMethodEntry,data interface{},ptype string){
 			Description: v.Description,
 			In:          ptype,
 			Name:        k,
-			Required:    SliceContain(obj.Required,k),
+			Required:    SliceContain(obj.Required, k),
 			Type:        v.Type,
 		}
 		param.Parameters = append(param.Parameters, parameter)
 	}
 }
 
-func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry{
-	if param == nil{
+func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry {
+	if param == nil {
 		panic("param must exist")
 		return nil
 	}
 
 	res := &SwaggerMethodEntry{}
-	if len(param.Tags) < 1{
+	if len(param.Tags) < 1 {
 		panic("tag must exist")
 		return nil
 	}
 	res.Tags = param.Tags
 
-	if len(param.Description) < 1 && len(param.Summary) < 1{
+	if len(param.Description) < 1 && len(param.Summary) < 1 {
 		panic("description&summay need one at least")
 		return nil
 	}
 	res.Summary = param.Summary
 	res.Description = param.Description
 
-	if param.ResponseData == nil{
+	if param.ResponseData == nil {
 		panic("response must exist")
 		return nil
 	}
 	obj := utils.JsonSchemaObj{}
 	obj.ParseObject(param.ResponseData)
-	parameter := &SwaggetMethodResponse{
-		Schema: &obj,
+	parameter := &utils.JsonSchemaObj{
+		Schema:&inobj,
 	}
-	resp := make(map[int]*SwaggetMethodResponse)
+	resp := make(map[int]*utils.JsonSchemaObj)
 	resp[http.StatusOK] = parameter
 	res.Responses = resp
 
-	if param.JsonData != nil && param.FormData != nil{
+	if param.JsonData != nil && param.FormData != nil {
 		panic("form data and json data can not together")
 		return nil
 	}
@@ -116,50 +117,48 @@ func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry{
 		res.Parameters = append(res.Parameters, parameter)
 	}
 
-	if param.FormData != nil{
-		parseParameter(res,param.FormData,"formData")
+	if param.FormData != nil {
+		parseParameter(res, param.FormData, "formData")
 	}
-	if param.QueryData != nil{
-		parseParameter(res,param.QueryData,"query")
+	if param.QueryData != nil {
+		parseParameter(res, param.QueryData, "query")
 	}
-	if param.PathData != nil{
-		parseParameter(res,param.PathData,"path")
+	if param.PathData != nil {
+		parseParameter(res, param.PathData, "path")
 	}
 	return res
 }
 
-func (entry *SwaggerMethodEntry) conbineExtraStruct(param *StructParam) bool {
-	if param == nil {
-		return false
-	}
-	var pcnt int16 = 0
-	if param.JsonData != nil {
-		obj := utils.JsonSchemaObj{}
-		obj.ParseObject(param.JsonData)
-		parameter := &SwaggerMethodParameter{
-			Description: "Json参数",
-			In:          "body",
-			Name:        "body",
-			Required:    true,
-			Type:        "object",
-			Schema:      &obj,
-		}
-		entry.Parameters = append(entry.Parameters, parameter)
-		pcnt += 1
-	}
-	if param.ResponseData != nil {
-		obj := utils.JsonSchemaObj{}
-		obj.ParseObject(param.ResponseData)
-		parameter := &SwaggetMethodResponse{
-			Schema: &obj,
-		}
-		resp := make(map[int]*SwaggetMethodResponse)
-		resp[http.StatusOK] = parameter
-		entry.Responses = resp
-		pcnt += 1
-	}
-	return pcnt >= 2
-}
+//func (entry *SwaggerMethodEntry) conbineExtraStruct(param *StructParam) bool {
+//	if param == nil {
+//		return false
+//	}
+//	var pcnt int16 = 0
+//	if param.JsonData != nil {
+//		obj := utils.JsonSchemaObj{}
+//		obj.ParseObject(param.JsonData)
+//		parameter := &SwaggerMethodParameter{
+//			Description: "Json参数",
+//			In:          "body",
+//			Name:        "body",
+//			Required:    true,
+//			Type:        "object",
+//			Schema:      &obj,
+//		}
+//		entry.Parameters = append(entry.Parameters, parameter)
+//		pcnt += 1
+//	}
+//	if param.ResponseData != nil {
+//		obj := utils.JsonSchemaObj{}
+//		obj.ParseObject(param.ResponseData)
+//		parameter := &obj
+//		resp := make(map[int]*utils.JsonSchemaObj)
+//		resp[http.StatusOK] = parameter
+//		entry.Responses = resp
+//		pcnt += 1
+//	}
+//	return pcnt >= 2
+//}
 
 type SwaggerDocFile map[string]SwaggerMethodEntry
 

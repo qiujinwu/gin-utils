@@ -6,16 +6,17 @@ import (
 )
 
 type JsonSchemaObj struct {
-	Description          string                    `json:"description,omitempty" yaml:"description"`
-	Type                 string                    `json:"type" yaml:"type" binding:"required,min=1"`
-	Items                *JsonSchemaObj            `json:"items,omitempty" yaml:"items"`
-	Properties           map[string]*JsonSchemaObj `json:"properties,omitempty" yaml:"properties"`
-	Required             []string                  `json:"required,omitempty" yaml:"required"`
+	Description string                    `json:"description,omitempty" yaml:"description"`
+	Type        string                    `json:"type,omitempty" yaml:"type" binding:"required,min=1"`
+	Items       *JsonSchemaObj            `json:"items,omitempty" yaml:"items"`
+	Properties  map[string]*JsonSchemaObj `json:"properties,omitempty" yaml:"properties"`
+	Required    []string                  `json:"required,omitempty" yaml:"required"`
+	Schema      *JsonSchemaObj            `json:"schema,omitempty" yaml:"schema"`
 }
 
 func (obj *JsonSchemaObj) ParseObject(variable interface{}) {
 	value := reflect.ValueOf(variable)
-	obj.read(value.Type(),"")
+	obj.read(value.Type(), "")
 }
 
 var formatMapping = map[string][]string{
@@ -54,7 +55,7 @@ func getTypeFromMapping(t reflect.Type) (string, string, reflect.Kind) {
 	return "", "", t.Kind()
 }
 
-func (obj *JsonSchemaObj) read(t reflect.Type,doc string) {
+func (obj *JsonSchemaObj) read(t reflect.Type, doc string) {
 	jsType, _, kind := getTypeFromMapping(t)
 	if jsType != "" {
 		obj.Type = jsType
@@ -72,7 +73,7 @@ func (obj *JsonSchemaObj) read(t reflect.Type,doc string) {
 	case reflect.Struct:
 		obj.readFromStruct(t)
 	case reflect.Ptr:
-		obj.read(t.Elem(),doc)
+		obj.read(t.Elem(), doc)
 	}
 }
 
@@ -82,7 +83,7 @@ func (obj *JsonSchemaObj) readFromSlice(t reflect.Type) {
 		obj.Type = "string"
 	} else if jsType != "" {
 		obj.Items = &JsonSchemaObj{Type: jsType}
-		obj.Items.read(t.Elem(),"")
+		obj.Items.read(t.Elem(), "")
 	}
 }
 
@@ -93,7 +94,7 @@ func (obj *JsonSchemaObj) readFromMap(t reflect.Type) {
 		obj.Properties = make(map[string]*JsonSchemaObj, 0)
 		var tmp_obj = &JsonSchemaObj{Type: jsType}
 		obj.Properties[".*"] = tmp_obj
-		tmp_obj.read(t.Elem(),"")
+		tmp_obj.read(t.Elem(), "")
 	}
 }
 
@@ -116,7 +117,7 @@ func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
 
 		var tmp_obj = &JsonSchemaObj{}
 		obj.Properties[name] = tmp_obj
-		tmp_obj.read(field.Type,field.Tag.Get("doc"))
+		tmp_obj.read(field.Type, field.Tag.Get("doc"))
 
 		if !opts.Contains("omitempty") {
 			obj.Required = append(obj.Required, name)
@@ -152,9 +153,9 @@ func (o tagOptions) Contains(optionName string) bool {
 	return false
 }
 
-func (o tagOptions) GetValue(optionName string) (string,bool) {
+func (o tagOptions) GetValue(optionName string) (string, bool) {
 	if len(o) == 0 {
-		return "",false
+		return "", false
 	}
 
 	s := string(o)
@@ -164,13 +165,13 @@ func (o tagOptions) GetValue(optionName string) (string,bool) {
 		if i >= 0 {
 			s, next = s[:i], s[i+1:]
 		}
-		if strings.ContainsAny(s,"="){
-			var strs = strings.Split(s,"=")
-			if len(strs) == 2 && strs[0] == optionName{
-				return strs[1],true
+		if strings.ContainsAny(s, "=") {
+			var strs = strings.Split(s, "=")
+			if len(strs) == 2 && strs[0] == optionName {
+				return strs[1], true
 			}
 		}
 		s = next
 	}
-	return "",false
+	return "", false
 }
