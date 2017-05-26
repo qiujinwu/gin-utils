@@ -92,7 +92,7 @@ func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry {
 	obj := utils.JsonSchemaObj{}
 	obj.ParseObject(param.ResponseData)
 	parameter := &utils.JsonSchemaObj{
-		Schema:&inobj,
+		Schema:&obj,
 	}
 	resp := make(map[int]*utils.JsonSchemaObj)
 	resp[http.StatusOK] = parameter
