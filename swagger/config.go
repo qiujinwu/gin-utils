@@ -4,6 +4,7 @@ import (
 	"github.com/qiujinwu/gin-utils/utils"
 	"net/http"
 	"strings"
+	"reflect"
 )
 
 type SwaggerMethodParameter struct {
@@ -41,6 +42,10 @@ func SliceContain(s []string, e string) bool {
 }
 
 func parseParameter(param *SwaggerMethodEntry, data interface{}, ptype string) {
+	if reflect.TypeOf(data).Kind() != reflect.Ptr{
+		panic("data must be pointer")
+	}
+
 	obj := utils.JsonSchemaObj{}
 	obj.ParseObject(data)
 	if obj.Type != "object" {
@@ -89,6 +94,9 @@ func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry {
 		panic("response must exist")
 		return nil
 	}
+	if reflect.TypeOf(param.ResponseData).Kind() != reflect.Ptr{
+		panic("data must be pointer")
+	}
 	obj := utils.JsonSchemaObj{}
 	obj.ParseObject(param.ResponseData)
 	parameter := &utils.JsonSchemaObj{
@@ -104,6 +112,9 @@ func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry {
 	}
 
 	if param.JsonData != nil {
+		if reflect.TypeOf(param.JsonData).Kind() != reflect.Ptr{
+			panic("data must be pointer")
+		}
 		obj := utils.JsonSchemaObj{}
 		obj.ParseObject(param.JsonData)
 		parameter := &SwaggerMethodParameter{
