@@ -11,7 +11,7 @@ type SwaggerMethodParameter struct {
 	In          string               `json:"in" yaml:"in" binding:"eq=query|eq=path|eq=formData|eq=body|eq=header"`
 	Name        string               `json:"name" yaml:"name" binding:"required,max=100,min=1"`
 	Required    bool                 `json:"required" yaml:"required"`
-	Type        string               `json:"type" yaml:"type" binding:"eq=string|eq=integer|eq=number|eq=boolean|eq=array|eq=object"`
+	Type        string               `json:"type" yaml:"type" binding:"eq=string|eq=integer|eq=number|eq=boolean|eq=array|eq=object|eq=file"`
 	Schema      *utils.JsonSchemaObj `json:"schema,omitempty" yaml:"schema"`
 }
 
