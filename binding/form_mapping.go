@@ -8,6 +8,7 @@ import (
 	"errors"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 func mapForm(ptr interface{}, form map[string][]string) error {
@@ -21,7 +22,7 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 		}
 
 		structFieldKind := structField.Kind()
-		inputFieldName := typeField.Tag.Get("form")
+		inputFieldName := typeField.Tag.Get("json")
 		if inputFieldName == "" {
 			inputFieldName = typeField.Name
 
@@ -36,6 +37,9 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 				continue
 			}
 		}
+		if strings.Contains(inputFieldName,","){
+			inputFieldName = strings.Split(inputFieldName,",")[0]
+		}
 		inputValue, exists := form[inputFieldName]
 		if !exists {
 			continue
@@ -43,7 +47,7 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 
 		numElems := len(inputValue)
 		if structFieldKind == reflect.Slice && numElems > 0 {
-			sliceOf := structField.Type().Elem().Kind()
+			sliceOf := structField.Type().Elem()
 			slice := reflect.MakeSlice(structField.Type(), numElems, numElems)
 			for i := 0; i < numElems; i++ {
 				if err := setWithProperType(sliceOf, inputValue[i], slice.Index(i)); err != nil {
@@ -52,7 +56,7 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			}
 			val.Field(i).Set(slice)
 		} else {
-			if err := setWithProperType(typeField.Type.Kind(), inputValue[0], structField); err != nil {
+			if err := setWithProperType(typeField.Type, inputValue[0], structField); err != nil {
 				return err
 			}
 		}
@@ -60,8 +64,8 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 	return nil
 }
 
-func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value) error {
-	switch valueKind {
+func setWithProperType(valueKind reflect.Type, val string, structField reflect.Value) error {
+	switch valueKind.Kind() {
 	case reflect.Int:
 		return setIntField(val, 0, structField)
 	case reflect.Int8:
@@ -89,7 +93,13 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 	case reflect.Float64:
 		return setFloatField(val, 64, structField)
 	case reflect.String:
-		structField.SetString(val)
+		if structField.Type().Kind() != reflect.Ptr{
+			structField.SetString(val)
+		}else{
+			structField.Set(reflect.ValueOf(&val))
+		}
+	case reflect.Ptr:
+		return setWithProperType(valueKind.Elem(),val,structField)
 	default:
 		return errors.New("Unknown type")
 	}
@@ -102,7 +112,11 @@ func setIntField(val string, bitSize int, field reflect.Value) error {
 	}
 	intVal, err := strconv.ParseInt(val, 10, bitSize)
 	if err == nil {
-		field.SetInt(intVal)
+		if field.Type().Kind() != reflect.Ptr{
+			field.SetInt(intVal)
+		}else{
+			field.Set(reflect.ValueOf(&intVal))
+		}
 	}
 	return err
 }
@@ -113,7 +127,11 @@ func setUintField(val string, bitSize int, field reflect.Value) error {
 	}
 	uintVal, err := strconv.ParseUint(val, 10, bitSize)
 	if err == nil {
-		field.SetUint(uintVal)
+		if field.Type().Kind() != reflect.Ptr{
+			field.SetUint(uintVal)
+		}else{
+			field.Set(reflect.ValueOf(&uintVal))
+		}
 	}
 	return err
 }
@@ -124,7 +142,11 @@ func setBoolField(val string, field reflect.Value) error {
 	}
 	boolVal, err := strconv.ParseBool(val)
 	if err == nil {
-		field.SetBool(boolVal)
+		if field.Type().Kind() != reflect.Ptr{
+			field.SetBool(boolVal)
+		}else{
+			field.Set(reflect.ValueOf(&boolVal))
+		}
 	}
 	return nil
 }
@@ -135,7 +157,16 @@ func setFloatField(val string, bitSize int, field reflect.Value) error {
 	}
 	floatVal, err := strconv.ParseFloat(val, bitSize)
 	if err == nil {
-		field.SetFloat(floatVal)
+		if field.Type().Kind() != reflect.Ptr{
+			field.SetFloat(floatVal)
+		}else{
+			if bitSize == 64{
+				field.Set(reflect.ValueOf(&floatVal))
+			}else{
+				float32Val := float32(floatVal)
+				field.Set(reflect.ValueOf(&float32Val))
+			}
+		}
 	}
 	return err
 }

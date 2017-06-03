@@ -59,7 +59,7 @@ func (obj pathBinding) read(c * gin.Context,val reflect.Value) error{
 			}
 
 			value := c.Param(name)
-			if err := setWithProperType(typeField.Type.Kind(), value, structField); err != nil {
+			if err := setWithProperType(typeField.Type, value, structField); err != nil {
 				return err
 			}
 		}
