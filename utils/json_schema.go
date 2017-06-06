@@ -105,6 +105,10 @@ func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
 	count := t.NumField()
 	for i := 0; i < count; i++ {
 		field := t.Field(i)
+		if field.Anonymous {
+			obj.read(field.Type,"")
+			continue
+		}
 
 		tag := field.Tag.Get("json")
 		name, opts := parseTag(tag)
